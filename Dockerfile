@@ -13,14 +13,8 @@ WORKDIR /app
 # Copia les dependències instal·lades des del builder
 COPY --from=builder /install /usr/local
 
-# Copia el codi de l'aplicació
+# Copia el codi de l'aplicació (això ja inclou 'static' i 'templates')
 COPY ./app /app
-
-# ---- LÍNIES NOVES AFEGIDES ----
-# Copia les carpetes 'static' i 'templates' a la imatge
-COPY ./static /app/static
-COPY ./templates /app/templates
-# -----------------------------
 
 # L'aplicació escriu a la base de dades i puja fitxers, necessitem un directori de dades
 # Aquest directori serà gestionat per un Persistent Volume a Kubernetes
