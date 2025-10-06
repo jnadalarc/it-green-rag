@@ -1,9 +1,2 @@
 [UI]
-# Nom que apareixerà a la part superior de la pàgina del navegador
-name = "Assistent IT Green"
-
-# Ruta al teu logo per a la capçalera de la UI
 logo = "/public/logo.png"
-
-# Ruta a la icona per a la pestanya del navegador
-favicon = "/public/logo.png"

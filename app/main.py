@@ -89,7 +89,6 @@ else: print("La base de dades RAG ja existeix. S'omet la indexació inicial.")
 async def start():
     """S'executa quan un usuari inicia un xat."""
 
-    await cl.Avatar(name="Assistent", url="/public/logo.png").send()
     
     await cl.Message(content="Hola! Soc el teu assistent de RAG. El sistema ja està llest. Per re-indexar els documents, escriu `REINDEX_RAG`.").send()
 
