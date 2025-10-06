@@ -3,11 +3,7 @@ kind: Ingress
 metadata:
   name: ${APP_NAME}
   annotations:
-    # --- LÍNIES NOVES PER A WEBSOCKETS ---
-    # Augmenta el temps d'espera per a connexions llargues
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    # ------------------------------------
+    # Deixem només les anotacions originals de límit de trànsit
     nginx.ingress.kubernetes.io/limit-rpm: "20"
     nginx.ingress.kubernetes.io/limit-rps: "2"
     nginx.ingress.kubernetes.io/limit-burst: "10"
