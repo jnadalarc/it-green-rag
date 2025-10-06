@@ -13,16 +13,14 @@ WORKDIR /app
 # Copia les dependències instal·lades des del builder
 COPY --from=builder /install /usr/local
 
-# Copia el codi de l'aplicació (això ja inclou 'static' i 'templates')
+# AQUESTA ÚNICA LÍNIA COPIA TOT EL NECESSARI (`main.py`, `static` i `templates`)
 COPY ./app /app
 
-# L'aplicació escriu a la base de dades i puja fitxers, necessitem un directori de dades
-# Aquest directori serà gestionat per un Persistent Volume a Kubernetes
+# L'aplicació escriu a la base de dades i puja fitxers
 RUN mkdir /data
 
 # Exposa el port on correrà l'aplicació
 EXPOSE 8000
 
 # Comanda per executar l'aplicació amb uvicorn
-# Escolta a 0.0.0.0 per ser accessible des de fora del contenidor
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
