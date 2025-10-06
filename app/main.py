@@ -13,9 +13,8 @@ SYSTEM_PROMPT = (
     "You are a concise assistant. If the user asks for document-based answers, you may call RAG to retrieve snippets."
 )
 
-# --- Funcions de RAG i LLM (sense canvis significatius) ---
-
 def rag_init():
+    """Inicialitza la base de dades FTS5 si no existeix."""
     RAG_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(RAG_DB_PATH)
     cur = conn.cursor()
@@ -23,10 +22,13 @@ def rag_init():
     conn.commit(); conn.close()
 
 def chunk_text(text):
-    CHUNK_SIZE = 1200; CHUNK_OVERLAP = 150
+    """Divideix el text en fragments (chunks)."""
+    CHUNK_SIZE = 1200
+    CHUNK_OVERLAP = 150
     return [text[i:i+CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE - CHUNK_OVERLAP)]
 
 def rag_ingest(path: Path):
+    """Indexa els fitxers de text d'un directori a la base de dades RAG."""
     print("=============================================")
     print(f"🚀 Iniciant procés d'indexació des de: {path}")
     if not path.exists():
@@ -47,58 +49,63 @@ def rag_ingest(path: Path):
     print(f"✅ Indexació finalitzada!\n   - Fitxers processats: {files_processed}\n   - Fragments creats: {total_chunks}"); print("============================================="); return total_chunks
 
 def rag_search(query: str, k: int = 5):
+    """Busca a la base de dades RAG de forma segura."""
     conn = sqlite3.connect(RAG_DB_PATH); cur = conn.cursor()
     safe_query = f'"{query}"'
     cur.execute("SELECT path, content FROM docs WHERE docs MATCH ? ORDER BY rank LIMIT ?", (safe_query, k))
     rows = cur.fetchall(); conn.close(); return rows
 
 def llama_chat(messages, temperature=0.7, max_tokens=1024):
-    payload = {"messages": messages, "temperature": temperature, "max_tokens": max_tokens}
+    """Envia una petició al servidor de Llama/Ollama."""
+    payload = {"messages": messages, "temperature": temperature, "max_tokens": max_tokens, "model": "local"}
     url = f"{LLAMA_URL}/v1/chat/completions"
     r = requests.post(url, json=payload, timeout=120)
     r.raise_for_status()
     return r.json()["choices"][0]["message"]["content"]
 
-# --- NOVA FUNCIÓ DE TRADUCCIÓ ---
 async def translate_text(text: str, target_language: str):
     """Tradueix text utilitzant el LLM."""
-    prompt = f"Translate the following text to {target_language}. ONLY output the translation and nothing else, no explanations. Text: \"{text}\""
+    prompt = f"Translate the following text to {target_language}. ONLY output the translation and nothing else. Text: \"{text}\""
     messages = [{"role": "user", "content": prompt}]
-    # Fem una crida amb baixa temperatura per a una traducció més directa
     translated = await cl.make_async(llama_chat)(messages, temperature=0.1)
     return translated.strip().strip('"')
 
 # --- LÒGICA D'ARRENCADA ---
-print("Iniciant el servidor Chainlit..."); rag_init()
+print("Iniciant el servidor Chainlit...")
+rag_init()
 db_size = RAG_DB_PATH.stat().st_size if RAG_DB_PATH.exists() else 0
-if db_size == 0: print("La base de dades RAG està buida. S'inicia la indexació inicial."); rag_ingest(DOCS_DIR)
-else: print("La base de dades RAG ja existeix. S'omet la indexació inicial.")
+if db_size == 0:
+    print("La base de dades RAG està buida. S'inicia la indexació inicial.")
+    rag_ingest(DOCS_DIR)
+else:
+    print("La base de dades RAG ja existeix. S'omet la indexació inicial.")
 
 # --- Interfície de Xat amb Chainlit ---
-
 @cl.on_chat_start
 async def start():
+    """S'executa quan un usuari inicia un xat."""
+    await cl.Avatar(name="Assistent", url="/public/logo.png").send()
     await cl.Message(content="Hola! Soc el teu assistent de RAG. El sistema ja està llest. Per re-indexar els documents, escriu `REINDEX_RAG`.").send()
 
 @cl.on_message
 async def main(message: cl.Message):
+    """S'executa cada cop que l'usuari envia un missatge."""
     query_ca = message.content
 
     if query_ca.upper() == "REINDEX_RAG":
         async with cl.Step(name="Re-indexar Base de Dades") as step:
-            step.output = "Iniciant la re-indexació dels documents. Això pot trigar una estona..."
+            step.output = "Iniciant la re-indexació dels documents..."
             count = await cl.make_async(rag_ingest)(DOCS_DIR)
             await cl.Message(content=f"Re-indexació finalitzada! S'han processat {count} fragments.").send()
         return
 
-    # --- NOU FLUX DE XAT AMB TRADUCCIÓ ---
     source_elements = []
     context = ""
 
     async with cl.Step(name="Traduir pregunta") as step:
-        step.input = f"Pregunta original (català): {query_ca}"
+        step.input = f"Pregunta (català): {query_ca}"
         query_es = await translate_text(query_ca, "Spanish")
-        step.output = f"Pregunta traduïda (castellà): {query_es}"
+        step.output = f"Traducció (castellà): {query_es}"
 
     async with cl.Step(name="Cercar documents") as step:
         step.input = query_es
@@ -106,28 +113,20 @@ async def main(message: cl.Message):
         step.output = f"{len(hits)} fragments trobats."
 
     if hits:
-        async with cl.Step(name="Traduir i preparar context") as step:
-            step.input = f"{len(hits)} fragments en castellà."
-            rag_snippets_es = "\n---\n".join([f"Document: {p}\nContingut: {c}" for p, c in hits])
-            
-            # Tradueix el context sencer al català
-            context_ca = await translate_text(rag_snippets_es, "Catalan")
+        async with cl.Step(name="Preparar context i fonts") as step:
+            rag_snippets_es = "\n---\n".join([f"Document: {p}\nContent: {c}" for p, c in hits])
             context = f"RAG_SNIPPETS (Spanish original):\n{rag_snippets_es}"
-            step.output = context_ca
             
-            # Prepara els elements per mostrar a la UI
-            source_elements = [
-                cl.Text(name=f"Fragment {i+1}", content=f"**Original (castellà):**\n{c}\n\n**Traducció (català):**\n{await translate_text(c, 'Catalan')}", display="inline")
-                for i, (p, c) in enumerate(hits)
-            ]
+            for i, (p, c) in enumerate(hits):
+                async with cl.Step(name=f"Traduir fragment {i+1}"):
+                    translated_content = await translate_text(c, 'Catalan')
+                    source_elements.append(
+                        cl.Text(name=f"Font {i+1}: {p}", content=f"**Original (castellà):**\n{c}\n\n**Traducció (català):**\n{translated_content}", display="inline")
+                    )
+            step.output = "Context i fonts preparades per a la UI."
 
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": (context + "\n\n" + query_ca)}
-    ]
+    messages = [ {"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": (context + "\n\n" + query_ca)} ]
 
     async with cl.Step(name="Generar resposta") as step:
-        step.input = "Crida al LLM amb el context i la pregunta original."
         answer = await cl.make_async(llama_chat)(messages)
-        # Envia la resposta final, adjuntant els fragments de context com a elements
         await cl.Message(content=answer, elements=source_elements).send()
