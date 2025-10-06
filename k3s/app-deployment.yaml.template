@@ -21,8 +21,7 @@ spec:
               name: ${APP_PORT}tcp
               protocol: TCP
           env:
-            - name: LLAMA_URL
-              # <-- CANVI FINAL: Apuntem al nom correcte del servei d'Ollama
+            - name: OLLAMA_HOST
               value: "http://ollama-service:11434"
             - name: DOCS_DIR
               value: "/docs"
