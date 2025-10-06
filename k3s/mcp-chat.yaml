@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+name: mcp-chat
+namespace: mcp-llm
+spec:
+replicas: 1
+selector:
+matchLabels: {app: mcp-chat}
+template:
+metadata:
+labels: {app: mcp-chat}
+annotations:
+prometheus.io/scrape: "true"
+prometheus.io/port: "8000"
+spec:
+imagePullSecrets:
+- name: regcred
+containers:
+- name: api
+image: REGISTRY_HOST/mcp/mcp-chat:latest
+imagePullPolicy: Always
+env:
+- {name: LLAMA_URL, value: "http://llama-cpp.mcp-llm.svc.cluster.local:8080"}
+- {name: DOCS_DIR, value: "/data/docs"}
+- {name: RAG_DB_PATH, value: "/data/rag/rag.db"}
+ports: [{containerPort: 8000}]
+volumeMounts:
+- {name: docs, mountPath: /data/docs}
+- {name: ragdb, mountPath: /data/rag}
+volumes:
+- name: docs
+hostPath: {path: /srv/llm-itgreen/docs, type: DirectoryOrCreate}
+- name: ragdb
+hostPath: {path: /srv/llm-itgreen/rag, type: DirectoryOrCreate}
+---
+apiVersion: v1
+kind: Service
+metadata:
+name: mcp-chat
+namespace: mcp-llm
+spec:
+selector: {app: mcp-chat}
+type: NodePort
+ports:
+- name: http
+port: 80
+targetPort: 8000
+nodePort: 30080
+---
+
+
+apiVersion: v1
+kind: Service
+metadata:
+name: mcp-chat
+namespace: mcp-llm
+spec:
+selector: {app: mcp-chat}
+ports:
+- name: http
+port: 80
+targetPort: 8000

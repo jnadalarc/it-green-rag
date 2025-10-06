@@ -1,0 +1,46 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MCP Chat</title>
+  <style>body{font-family:system-ui,Arial;margin:20px;max-width:900px} textarea{width:100%;height:120px} .msg{white-space:pre-wrap;border:1px solid #ddd;padding:10px;border-radius:8px} .row{display:flex;gap:10px;align-items:center} .muted{color:#666;font-size:0.9em}</style>
+</head>
+<body>
+  <h2>MCP Local Chat</h2>
+  <p class="muted">Utilitza RAG automàtic sobre fitxers pujats. Ordres MCP manuals: <code>filesystem.read:rel/path.txt</code>, <code>fetch.get:http://localhost:XXXX</code>.</p>
+  <div>
+    <form id="upf" onsubmit="return false">
+      <input type="file" id="file">
+      <button onclick="upload()">Puja fitxer</button>
+      <span id="ustatus" class="muted"></span>
+    </form>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <textarea id="q" placeholder="Escriu el missatge..."></textarea>
+  </div>
+  <div class="row">
+    <label><input type="checkbox" id="use_rag" checked> RAG</label>
+    <button onclick="send()">Envia</button>
+  </div>
+  <h3>Resposta</h3>
+  <div id="ans" class="msg"></div>
+<script>
+async function upload(){
+  const f=document.getElementById('file').files[0];
+  if(!f){return}
+  const fd=new FormData(); fd.append('file',f);
+  const r=await fetch('/upload',{method:'POST',body:fd});
+  const j=await r.json();
+  document.getElementById('ustatus').textContent=j.ok?('Pujat: '+j.filename):'Error';
+}
+async function send(){
+  const q=document.getElementById('q').value;
+  const use_rag=document.getElementById('use_rag').checked;
+  const r=await fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:q,use_rag})});
+  const j=await r.json();
+  document.getElementById('ans').textContent=j.answer||JSON.stringify(j,null,2);
+}
+</script>
+</body>
+</html>

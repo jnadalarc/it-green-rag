@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+name: llama-cpp
+namespace: mcp-llm
+spec:
+replicas: 1
+selector:
+matchLabels: {app: llama-cpp}
+template:
+metadata:
+labels: {app: llama-cpp}
+spec:
+containers:
+- name: server
+image: ghcr.io/ggerganov/llama.cpp:server
+args: ["-m","/models/mistral-7b-instruct.Q4_K_M.gguf","-c","4096","--port","8080","-ngl","0"]
+ports: [{containerPort: 8080}]
+resources:
+limits: {cpu: "6", memory: "20Gi"}
+requests: {cpu: "2", memory: "8Gi"}
+volumeMounts:
+- {name: models, mountPath: /models, readOnly: true}
+volumes:
+- name: models
+hostPath: {path: /srv/llm-models, type: DirectoryOrCreate}
+---
+apiVersion: v1
+kind: Service
+metadata:
+name: llama-cpp
+namespace: mcp-llm
+spec:
+selector: {app: llama-cpp}
+ports:
+- name: http
+port: 8080
+targetPort: 8080
