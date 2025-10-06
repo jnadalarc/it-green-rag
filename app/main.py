@@ -102,7 +102,7 @@ async def main(message: cl.Message):
         await cl.Message(content="Re-indexació finalitzada. Ja pots preguntar sobre el nou contingut.").send()
         return
 
-    # Lògica principal del xat
+    # Lògica principal del xat 
     query = message.content
     hits = rag_search(query, k=4)
     context = ""
