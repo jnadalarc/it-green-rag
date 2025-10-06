@@ -12,7 +12,7 @@ jobs:
   build-and-deploy:
     runs-on: self-hosted
     env:
-      REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}   # defineix-la com a Variable d'Actions
+      REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
     steps:
       - uses: actions/checkout@v4
 
@@ -42,9 +42,14 @@ jobs:
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
           kubectl version --short || true
 
-      - name: Create/Update regcred secret
+      - name: Create or update regcred secret
         run: |
-          bash k3s/registry-secret.sh
+          kubectl get ns mcp-llm >/dev/null 2>&1 || kubectl create ns mcp-llm
+          kubectl -n mcp-llm delete secret regcred >/dev/null 2>&1 || true
+          kubectl -n mcp-llm create secret docker-registry regcred \
+            --docker-server=${{ env.REGISTRY_HOST }} \
+            --docker-username=${{ secrets.REGISTRY_USERNAME }} \
+            --docker-password=${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Deploy manifests
         run: |
@@ -54,3 +59,4 @@ jobs:
       - name: Rollout status
         run: |
           kubectl -n mcp-llm rollout status deploy/mcp-chat --timeout=120s
+
