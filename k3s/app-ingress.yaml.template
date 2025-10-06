@@ -2,12 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ${APP_NAME}
-  annotations:
-    # Deixem només les anotacions originals de límit de trànsit
-    nginx.ingress.kubernetes.io/limit-rpm: "20"
-    nginx.ingress.kubernetes.io/limit-rps: "2"
-    nginx.ingress.kubernetes.io/limit-burst: "10"
-    nginx.ingress.kubernetes.io/limit-connections: "2"
 spec:
   ingressClassName: nginx
   rules:

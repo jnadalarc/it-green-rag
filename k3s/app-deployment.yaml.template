@@ -22,11 +22,27 @@ spec:
               protocol: TCP
           env:
             - name: LLAMA_URL
-              value: "http://ollama-deployment:11434" # Apuntem al servei d'Ollama que ja tens
+              value: "http://ollama-deployment:11434"
             - name: DOCS_DIR
               value: "/docs"
             - name: RAG_DB_PATH
               value: "/rag/rag.db"
+          
+          # --- NOU: SONDES DE SALUT PER A KUBERNETES ---
+          startupProbe:
+            httpGet:
+              path: / # Comprovem la pàgina principal
+              port: ${APP_PORT}
+            failureThreshold: 30 # Falla després de 30 intents (30 * 10s = 5 minuts)
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: / # Un cop arrencat, comprovem que segueixi llest
+              port: ${APP_PORT}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          # ----------------------------------------------
+            
           volumeMounts:
             - mountPath: /docs
               name: rag-docs-volume
