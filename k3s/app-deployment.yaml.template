@@ -22,26 +22,26 @@ spec:
               protocol: TCP
           env:
             - name: LLAMA_URL
-              value: "http://ollama-deployment:11434"
+              # <-- CANVI FINAL: Apuntem al nom correcte del servei d'Ollama
+              value: "http://ollama-service:11434"
             - name: DOCS_DIR
               value: "/docs"
             - name: RAG_DB_PATH
               value: "/rag/rag.db"
           
-          # --- NOU: SONDES DE SALUT PER A KUBERNETES ---
+          # Sondes de salut per donar temps a l'aplicació a arrencar (indexar RAG)
           startupProbe:
             httpGet:
-              path: / # Comprovem la pàgina principal
+              path: / # Comprovem la pàgina principal de Chainlit
               port: ${APP_PORT}
             failureThreshold: 30 # Falla després de 30 intents (30 * 10s = 5 minuts)
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: / # Un cop arrencat, comprovem que segueixi llest
+              path: / # Un cop arrencat, comprovem que segueixi llest per rebre trànsit
               port: ${APP_PORT}
             initialDelaySeconds: 5
             periodSeconds: 5
-          # ----------------------------------------------
             
           volumeMounts:
             - mountPath: /docs
@@ -57,5 +57,5 @@ spec:
             type: DirectoryOrCreate
         - name: rag-db-volume
           hostPath:
-            path: /srv/llm-itgreen/rag
+            path: /srv/lll-itgreen/rag # Assegura't que aquesta ruta és correcta
             type: DirectoryOrCreate

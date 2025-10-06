@@ -4,8 +4,7 @@ import requests
 import sqlite3
 from pathlib import Path
 
-# --- Configuració i Lògica de Backend ---
-# ... (la resta de la configuració i funcions es mantenen igual)
+# ... (tota la part superior del fitxer es queda igual) ...
 LLAMA_URL = os.getenv("LLAMA_URL", "http://localhost:8080")
 DOCS_DIR = Path(os.getenv("DOCS_DIR", "/docs")).resolve()
 RAG_DB_PATH = Path(os.getenv("RAG_DB_PATH", "/rag/rag.db")).resolve()
@@ -31,7 +30,6 @@ def chunk_text(text):
 
 def rag_ingest(path: Path):
     """Indexa els fitxers de text d'un directori a la base de dades RAG."""
-    # ... (aquesta funció es manté exactament igual, amb els logs)
     print("=============================================")
     print(f"🚀 Iniciant procés d'indexació des de: {path}")
     
@@ -76,16 +74,22 @@ def rag_ingest(path: Path):
     return total_chunks
 
 def rag_search(query: str, k: int = 5):
-    # ... (aquesta funció es manté igual)
+    """Busca a la base de dades RAG."""
     conn = sqlite3.connect(RAG_DB_PATH)
     cur = conn.cursor()
-    cur.execute("SELECT path, content FROM docs WHERE docs MATCH ? ORDER BY rank LIMIT ?", (query, k))
+    
+    # ---- LÍNIA MODIFICADA ----
+    # Embolcallem la consulta amb cometes dobles per tractar-la com una frase literal
+    safe_query = f'"{query}"'
+    # --------------------------
+    
+    cur.execute("SELECT path, content FROM docs WHERE docs MATCH ? ORDER BY rank LIMIT ?", (safe_query, k))
     rows = cur.fetchall()
     conn.close()
     return rows
 
 def llama_chat(messages, temperature=0.7, max_tokens=512):
-    # ... (aquesta funció es manté igual)
+    """Envia una petició al servidor de Llama.cpp."""
     payload = {"messages": messages, "temperature": temperature, "max_tokens": max_tokens}
     url = f"{LLAMA_URL}/v1/chat/completions"
     r = requests.post(url, json=payload, timeout=120)
@@ -96,33 +100,35 @@ def llama_chat(messages, temperature=0.7, max_tokens=512):
 print("Iniciant el servidor Chainlit...")
 rag_init()
 
-# Comprova si la base de dades ja existeix i té contingut. Si no, l'indexa.
 db_size = RAG_DB_PATH.stat().st_size if RAG_DB_PATH.exists() else 0
 if db_size == 0:
     print("La base de dades RAG està buida. S'inicia la indexació inicial.")
     rag_ingest(DOCS_DIR)
-else: 
+else:
     print("La base de dades RAG ja existeix. S'omet la indexació inicial.")
-# -----------------------------------------------------------
 
 # --- Interfície de Xat amb Chainlit ---
 
+
 @cl.on_chat_start
 async def start():
-    await cl.Message(content="Hola! Soc el teu assistent de RAG. El sistema ja està llest. Per re-indexar els documents, escriu `REINDEX_RAG`.").send()
+    """Lògica que s'executa quan un usuari inicia un xat."""
+    await cl.Avatar(
+        name="Assistent",
+        url="/public/logo.png",
+    ).send()
 
+    await cl.Message(content="Hola! Soc el teu assistent de RAG. El sistema ja està llest. Per re-indexar els documents, escriu `REINDEX_RAG`.").send()
 @cl.on_message
 async def main(message: cl.Message):
     query = message.content
 
-    # NOU: Comanda especial per re-indexar
     if query.upper() == "REINDEX_RAG":
         await cl.Message(content="Rebut! Iniciant la re-indexació dels documents. Això pot trigar una estona...").send()
         count = rag_ingest(DOCS_DIR)
         await cl.Message(content=f"Re-indexació finalitzada! S'han processat {count} fragments.").send()
         return
 
-    # La resta de la lògica del xat es manté igual
     hits = rag_search(query, k=4)
     context = ""
     if hits:
