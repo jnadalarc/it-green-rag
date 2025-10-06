@@ -1,12 +1,13 @@
 # --- Variables ---
-APP_NAME := mcp-rag-rapid
+APP_NAME := mcp-chainlit-rag
 REGISTRY_URL ?= registry.teva-empresa.com
 TAG ?= latest
 
 IMAGE_NAME := $(REGISTRY_URL)/$(APP_NAME):$(TAG)
 
 # --- Comandes ---
-
+# ... (la resta de comandes 'build', 'push', 'deploy' es queden igual)
+# ... [Contingut del Makefile anterior]
 build:
 	@echo "Building Docker image: $(IMAGE_NAME)"
 	@docker build -t $(IMAGE_NAME) .

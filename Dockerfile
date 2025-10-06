@@ -13,14 +13,14 @@ WORKDIR /app
 # Copia les dependències instal·lades des del builder
 COPY --from=builder /install /usr/local
 
-# AQUESTA ÚNICA LÍNIA COPIA TOT EL NECESSARI (`main.py`, `static` i `templates`)
+# Copia el codi de l'aplicació
 COPY ./app /app
 
-# L'aplicació escriu a la base de dades i puja fitxers
-RUN mkdir /data
+# Crea els directoris per a les dades persistents
+RUN mkdir -p /docs /rag
 
 # Exposa el port on correrà l'aplicació
 EXPOSE 8000
 
-# Comanda per executar l'aplicació amb uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Comanda per executar l'aplicació amb Chainlit
+CMD ["chainlit", "run", "main.py", "--host", "0.0.0.0", "--port", "8000"]

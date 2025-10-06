@@ -1,5 +1,4 @@
-fastapi
-uvicorn[standard]
-jinja2
+chainlit
+requests
 requests
 python-multipart
