@@ -101,7 +101,7 @@ db_size = RAG_DB_PATH.stat().st_size if RAG_DB_PATH.exists() else 0
 if db_size == 0:
     print("La base de dades RAG està buida. S'inicia la indexació inicial.")
     rag_ingest(DOCS_DIR)
-else:
+else: 
     print("La base de dades RAG ja existeix. S'omet la indexació inicial.")
 # -----------------------------------------------------------
 
