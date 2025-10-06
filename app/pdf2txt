@@ -1,0 +1,51 @@
+import os
+import fitz  # Aquest és el nom d'importació de PyMuPDF
+
+# --- Configuració ---
+# La carpeta del servidor on deses els documents per al RAG.
+DIRECTORI_DOCS = "../data2rag"
+
+def convertir_pdfs_a_txt(directori):
+    """
+    Busca fitxers PDF en un directori i els converteix a fitxers TXT.
+    """
+    print(f"🔎 Buscant arxius PDF a '{directori}'...")
+    
+    # Comprova si el directori existeix
+    if not os.path.isdir(directori):
+        print(f"❌ Error: El directori '{directori}' no existeix.")
+        return
+
+    # Recorre tots els arxius del directori
+    for nom_arxiu in os.listdir(directori):
+        # Comprova si l'arxiu és un PDF
+        if nom_arxiu.lower().endswith(".pdf"):
+            ruta_pdf = os.path.join(directori, nom_arxiu)
+            # Defineix el nom de l'arxiu de sortida canviant l'extensió
+            ruta_txt = os.path.splitext(ruta_pdf)[0] + ".txt"
+
+            print(f"📄 Convertint '{nom_arxiu}' -> '{os.path.basename(ruta_txt)}'...")
+
+            try:
+                # Obre el document PDF
+                document_pdf = fitz.open(ruta_pdf)
+                contingut_text = ""
+                
+                # Extreu el text de cada pàgina
+                for pagina in document_pdf:
+                    contingut_text += pagina.get_text()
+                
+                # Tanca el document PDF
+                document_pdf.close()
+                
+                # Desa el contingut extret a l'arxiu .txt
+                with open(ruta_txt, "w", encoding="utf-8") as arxiu_txt:
+                    arxiu_txt.write(contingut_text)
+            
+            except Exception as e:
+                print(f"⚠️ Error processant '{nom_arxiu}': {e}")
+
+    print("\n✅ Procés de conversió finalitzat.")
+
+if __name__ == "__main__":
+    convertir_pdfs_a_txt(DIRECTORI_DOCS)

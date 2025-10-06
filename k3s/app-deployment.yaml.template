@@ -22,11 +22,14 @@ spec:
               protocol: TCP
           env:
             - name: LLAMA_URL
-              value: "http://llama-service.local:8080" # URL del servei de Llama dins del clúster
-            - name: DOCS_DIR
-              value: "/data/docs"
-            - name: RAG_DB_PATH
-              value: "/data/rag.db"
+              # Això probablement ja no ho faràs servir si carregues el GGUF localment
+              value: "http://llama-service.local:8080"
+            - name: MODEL_PATH # Variable perquè el teu codi sàpiga on és el model
+              value: "/models/nom-del-teu-model.gguf" # <-- Canvia el nom del fitxer
+            - name: DOCS_DIR # Directori per als documents del RAG
+              value: "/docs"
+            - name: RAG_DB_PATH # Ruta completa per a la base de dades del RAG
+              value: "/rag/rag.db"
           resources: {}
           securityContext:
             allowPrivilegeEscalation: false
@@ -38,8 +41,12 @@ spec:
           volumeMounts:
             - mountPath: /auth
               name: auth
-            - mountPath: /data # Muntem el volum persistent a /data
-              name: app-data
+            - mountPath: /models
+              name: models-volume
+            - mountPath: /docs
+              name: rag-docs-volume
+            - mountPath: /rag
+              name: rag-db-volume
       dnsPolicy: ClusterFirst
       imagePullSecrets:
         - name: registry-wattega-auth
@@ -52,6 +59,15 @@ spec:
           secret:
             defaultMode: 420
             secretName: registry-auth-secret
-        - name: app-data
-          persistentVolumeClaim:
-            claimName: ${APP_NAME}-data-pvc # Referenciem el PVC que hem creat
+        - name: models-volume
+          hostPath:
+            path: /srv/llm-models
+            type: DirectoryOrCreate
+        - name: rag-docs-volume
+          hostPath:
+            path: /srv/llm-itgreen/docs
+            type: DirectoryOrCreate
+        - name: rag-db-volume
+          hostPath:
+            path: /srv/llm-itgreen/rag
+            type: DirectoryOrCreate
