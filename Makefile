@@ -11,7 +11,7 @@ IMAGE_NAME := $(REGISTRY_URL)/$(APP_NAME):$(TAG)
 build:
 	@echo "Building Docker image: $(IMAGE_NAME)"
 	@docker build -t $(IMAGE_NAME) .
-
+	@docker build --no-cache -t $(IMAGE_NAME) .
 push: build
 	@echo "Pushing Docker image: $(IMAGE_NAME)"
 	@docker push $(IMAGE_NAME)
