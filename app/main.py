@@ -62,7 +62,7 @@ def llama_chat(messages, temperature=0.7):
     # NOU: Adaptem la crida a l'API estàndard d'Ollama /api/chat
     payload = {
         "model": "mistral", # Assegura't que aquest model existeix al teu Ollama
-        "messages": messages, 
+        "messages": messages,
         "stream": False,
         "options": {
             "temperature": temperature
@@ -89,8 +89,20 @@ else: print("La base de dades RAG ja existeix. S'omet la indexació inicial.")
 async def start():
     """S'executa quan un usuari inicia un xat."""
 
+    # <--- NOU: Definir l'element d'imatge
+    # Assegura't que tens una carpeta 'public' a l'arrel amb 'logo.png' a dins.
+    logo_element = cl.Image(
+        path="./public/logo.png",
+        name="logo",
+        display="inline",
+        size="large", # Pots ajustar la mida a 'small', 'medium', o 'large'
+    )
     
-    await cl.Message(content="Hola! Soc el teu assistent de RAG. El sistema ja està llest. Per re-indexar els documents, escriu `REINDEX_RAG`.").send()
+    # <--- MODIFICAT: Enviar el missatge de benvinguda adjuntant l'element de la imatge
+    await cl.Message(
+        content="Hola! Soc el teu assistent de RAG. El sistema ja està llest.\nPer re-indexar els documents, escriu `REINDEX_RAG`.",
+        elements=[logo_element]
+    ).send()
 
 @cl.on_message
 async def main(message: cl.Message):
