@@ -1,9 +1,8 @@
 # --- Variables ---
 # Canvia aquests valors segons el teu projecte i registry
 APP_NAME := mcp-rag-rapid
-REGISTRY_URL := registry.wattega.com # El teu registry privat
+REGISTRY_URL ?= registry.wattega.com # El teu registry privat
 TAG ?= latest
-
 IMAGE_NAME := $(REGISTRY_URL)/$(APP_NAME):$(TAG)
 
 # --- Comandes ---
