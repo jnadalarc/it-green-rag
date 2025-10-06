@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${APP_NAME}
+spec:
+  selector:
+    matchLabels:
+      app: ${APP_NAME}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ${APP_NAME}
+    spec:
+      containers:
+        - image: ${IMAGE}
+          imagePullPolicy: Always
+          name: ${APP_NAME}
+          ports:
+            - containerPort: ${APP_PORT}
+              name: ${APP_PORT}tcp
+              protocol: TCP
+          env:
+            - name: LLAMA_URL
+              value: "http://llama-service.local:8080" # URL del servei de Llama dins del clúster
+            - name: DOCS_DIR
+              value: "/data/docs"
+            - name: RAG_DB_PATH
+              value: "/data/rag.db"
+          resources: {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /auth
+              name: auth
+            - mountPath: /data # Muntem el volum persistent a /data
+              name: app-data
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+        - name: registry-wattega-auth
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - name: auth
+          secret:
+            defaultMode: 420
+            secretName: registry-auth-secret
+        - name: app-data
+          persistentVolumeClaim:
+            claimName: ${APP_NAME}-data-pvc # Referenciem el PVC que hem creat

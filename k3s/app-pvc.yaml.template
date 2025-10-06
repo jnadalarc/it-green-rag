@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ${APP_NAME}-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce # Aquest volum només pot ser muntat per un pod a la vegada
+  resources:
+    requests:
+      storage: 2Gi # Demanem 2GB d'espai, ajusta-ho segons les teves necessitats

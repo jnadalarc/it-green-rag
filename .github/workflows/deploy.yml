@@ -1,62 +1,56 @@
-name: deploy-mcp-chat
+name: Build and Deploy to K3s
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'app/**'
-      - 'k3s/**'
-      - '.github/workflows/deploy.yml'
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
-    runs-on: self-hosted
-    env:
-      REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+  build-and-push:
+    runs-on: self-hosted # Es correrà en el teu runner self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to registry
+      - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY_HOST }}
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ${{ secrets.REGISTRY_URL }} # Ex: registry.teva-empresa.com
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: ./app
-          file: ./app/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY_HOST }}/mcp/mcp-chat:latest
-            ${{ env.REGISTRY_HOST }}/mcp/mcp-chat:${{ github.sha }}
+      - name: Get current date as tag
+        id: date
+        run: echo "TAG=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
-      - name: Kubeconfig
+      - name: Build and push Docker image
         run: |
-          echo "Exportant KUBECONFIG per apuntar a k3s"
-          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          kubectl version --short || true
+          make push TAG=${{ env.TAG }}
+        env:
+          REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
 
-      - name: Create or update regcred secret
+  deploy-to-k3s:
+    runs-on: self-hosted
+    needs: build-and-push # Aquest job depèn de l'anterior
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Kubeconfig
         run: |
-          kubectl get ns mcp-llm >/dev/null 2>&1 || kubectl create ns mcp-llm
-          kubectl -n mcp-llm delete secret regcred >/dev/null 2>&1 || true
-          kubectl -n mcp-llm create secret docker-registry regcred \
-            --docker-server=${{ env.REGISTRY_HOST }} \
-            --docker-username=${{ secrets.REGISTRY_USERNAME }} \
-            --docker-password=${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: Deploy manifests
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+      
+      - name: Get latest tag
+        id: date
+        run: echo "TAG=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+      
+      - name: Deploy to K3s cluster
         run: |
-          kubectl apply -f k3s/llama-cpp.yaml
-          kubectl apply -f k3s/mcp-chat.yaml
-
-      - name: Rollout status
-        run: |
-          kubectl -n mcp-llm rollout status deploy/mcp-chat --timeout=120s
-
+          make deploy TAG=${{ env.TAG }}
+        env:
+          REGISTRY_URL: ${{ secrets.REGISTRY_URL }}
