@@ -16,6 +16,12 @@ COPY --from=builder /install /usr/local
 # Copia el codi de l'aplicació
 COPY ./app /app
 
+# ---- LÍNIES NOVES AFEGIDES ----
+# Copia les carpetes 'static' i 'templates' a la imatge
+COPY ./static /app/static
+COPY ./templates /app/templates
+# -----------------------------
+
 # L'aplicació escriu a la base de dades i puja fitxers, necessitem un directori de dades
 # Aquest directori serà gestionat per un Persistent Volume a Kubernetes
 RUN mkdir /data

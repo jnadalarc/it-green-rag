@@ -15,7 +15,7 @@ def convertir_pdfs_a_txt(directori):
     if not os.path.isdir(directori):
         print(f"❌ Error: El directori '{directori}' no existeix.")
         return
-
+  
     # Recorre tots els arxius del directori
     for nom_arxiu in os.listdir(directori):
         # Comprova si l'arxiu és un PDF
