@@ -92,7 +92,7 @@ async def start():
     # <--- NOU: Definir l'element d'imatge
     # Assegura't que tens una carpeta 'public' a l'arrel amb 'logo.png' a dins.
     logo_element = cl.Image(
-        path="./public/logo.svg",
+        path="./public/logo.png",
         name="logo",
         display="inline",
         size="large", # Pots ajustar la mida a 'small', 'medium', o 'large'
@@ -100,7 +100,7 @@ async def start():
     
     # <--- MODIFICAT: Enviar el missatge de benvinguda adjuntant l'element de la imatge
     await cl.Message(
-        content="Hola! Soc el teu assistent de RAG. El sistema ja està llest.\nPer re-indexar els documents, escriu `REINDEX_RAG`.",
+        content="Hola! Soc el teu assistent de normativa tècnica.\nPer re-indexar els documents, escriu `REINDEX_RAG`.",
         elements=[logo_element]
     ).send()
 
