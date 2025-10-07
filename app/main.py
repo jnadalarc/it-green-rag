@@ -88,18 +88,18 @@ async def start():
 
     # Definir DOS elements d'imatge, un per a cada tema.
     # Aquests fitxers han d'estar a 'app/public/'.
-    logo_light_element = cl.Image(
-        path="./public/logo-light.png",
-        name="logo_light",  # Nom per al tema fosc (logo clar)
-        display="inline",
-        size="large",
-    )
-    logo_dark_element = cl.Image(
-        path="./public/logo-dark.png",
-        name="logo_dark",  # Nom per al tema clar (logo fosc)
-        display="inline",
-        size="large",
-    )
+    # logo_light_element = cl.Image(
+    #     path="./public/logo-light.png",
+    #     name="logo_light",  # Nom per al tema fosc (logo clar)
+    #     display="inline",
+    #     size="large",
+    # )
+    # logo_dark_element = cl.Image(
+    #     path="./public/logo-dark.png",
+    #     name="logo_dark",  # Nom per al tema clar (logo fosc)
+    #     display="inline",
+    #     size="large",
+    # )
     
     # Enviar el missatge de benvinguda adjuntant AMBDÓS elements.
     # El CSS s'hauria d'encarregar de mostrar només el correcte.
