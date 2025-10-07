@@ -1,60 +1,42 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ${APP_NAME}
+  name: app-deployment
+  labels: { app: rag }
 spec:
-  selector:
-    matchLabels:
-      app: ${APP_NAME}
   replicas: 1
+  selector:
+    matchLabels: { app: rag }
   template:
     metadata:
-      labels:
-        app: ${APP_NAME}
+      labels: { app: rag }
     spec:
       containers:
-        - image: ${IMAGE}
-          imagePullPolicy: Always
-          name: ${APP_NAME}
-          ports:
-            - containerPort: ${APP_PORT}
-              name: ${APP_PORT}tcp
-              protocol: TCP
-          env:
-            - name: OLLAMA_HOST
-              value: "http://ollama-service:11434"
-            - name: DOCS_DIR
-              value: "/docs"
-            - name: RAG_DB_PATH
-              value: "/rag/rag.db"
-          
-          # Sondes de salut per donar temps a l'aplicació a arrencar (indexar RAG)
-          startupProbe:
-            httpGet:
-              path: / # Comprovem la pàgina principal de Chainlit
-              port: ${APP_PORT}
-            failureThreshold: 30 # Falla després de 30 intents (30 * 10s = 5 minuts)
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: / # Un cop arrencat, comprovem que segueixi llest per rebre trànsit
-              port: ${APP_PORT}
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            
-          volumeMounts:
-            - mountPath: /docs
-              name: rag-docs-volume
-            - mountPath: /rag
-              name: rag-db-volume
-      imagePullSecrets:
-        - name: registry-wattega-auth
+      - name: chainlit
+        image: ghcr.io/itgreen/chainlit-rag:latest   # la teva imatge
+        ports:
+        - containerPort: 8000
+        env:
+        - name: OLLAMA_HOST
+          value: "http://ollama-service:11434"       # clau
+        - name: DOCS_DIR
+          value: "/docs"
+        - name: RAG_DB_PATH
+          value: "/rag/rag.db"
+        # probes TCP per evitar haver de crear /healthz ara
+        readinessProbe:
+          tcpSocket: { port: 8000 }
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket: { port: 8000 }
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        resources:
+          requests: { cpu: "500m", memory: "512Mi" }
+          limits:   { cpu: "2",    memory: "2Gi" }
+        volumeMounts:
+        - name: rag-db
+          mountPath: /rag
       volumes:
-        - name: rag-docs-volume
-          hostPath:
-            path: /srv/llm-itgreen/docs
-            type: DirectoryOrCreate
-        - name: rag-db-volume
-          hostPath:
-            path: /srv/lll-itgreen/rag # Assegura't que aquesta ruta és correcta
-            type: DirectoryOrCreate
+      - name: rag-db
+        emptyDir: {}
