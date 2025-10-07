@@ -1,4 +1,4 @@
-# Aquest és el teu app/main.py complet i corregit
+# Aquest és el teu app/main.py complet i amb el CSS integrat
 
 import chainlit as cl
 import os
@@ -6,10 +6,39 @@ import requests
 import sqlite3
 from pathlib import Path
 
+# --- NOU: CSS integrat directament al codi ---
+# Aquesta cadena de text conté tot el CSS necessari.
+# L'injectarem directament a l'aplicació quan comenci el xat.
+CUSTOM_CSS = """
+<style>
+    /* Amaguem per defecte el logo del tema fosc (el que és de color clar) */
+    .element-logo_light {
+        display: none !important;
+    }
+
+    /* Forcem la visibilitat del logo per al tema clar (el que és de color fosc) */
+    .element-logo_dark {
+        display: inline-block !important;
+    }
+    
+    /* Quan el tema fosc està actiu... */
+    html[data-theme="dark"] {
+        /* Amaguem el logo del tema clar */
+        .element-logo_dark {
+            display: none !important;
+        }
+        
+        /* I mostrem el logo del tema fosc */
+        .element-logo_light {
+            display: inline-block !important;
+        }
+    }
+</style>
+"""
+
 # --- Configuració ---
-# NOU: Utilitzem OLLAMA_HOST i definim la URL de l'API aquí
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-OLLAMA_API_URL = f"{OLLAMA_HOST}/api/chat" # <-- L'endpoint més compatible d'Ollama
+OLLAMA_API_URL = f"{OLLAMA_HOST}/api/chat"
 
 DOCS_DIR = Path(os.getenv("DOCS_DIR", "/docs")).resolve()
 RAG_DB_PATH = Path(os.getenv("RAG_DB_PATH", "/rag/rag.db")).resolve()
@@ -56,17 +85,14 @@ def rag_search(query: str, k: int = 5):
     cur.execute("SELECT path, content FROM docs WHERE docs MATCH ? ORDER BY rank LIMIT ?", (safe_query, k))
     rows = cur.fetchall(); conn.close(); return rows
 
-# --- Funcions de LLM (Modificades) ---
+# --- Funcions de LLM ---
 def llama_chat(messages, temperature=0.7):
     """Envia una petició al servidor d'Ollama usant l'API nativa."""
-    # NOU: Adaptem la crida a l'API estàndard d'Ollama /api/chat
     payload = {
-        "model": "mistral", # Assegura't que aquest model existeix al teu Ollama
+        "model": "mistral",
         "messages": messages,
         "stream": False,
-        "options": {
-            "temperature": temperature
-        }
+        "options": { "temperature": temperature }
     }
     r = requests.post(OLLAMA_API_URL, json=payload, timeout=120)
     r.raise_for_status()
@@ -88,28 +114,36 @@ else: print("La base de dades RAG ja existeix. S'omet la indexació inicial.")
 @cl.on_chat_start
 async def start():
     """S'executa quan un usuari inicia un xat."""
+    # <--- NOU: Injectem el CSS com si fos un missatge. No serà visible.
+    await cl.Message(content=CUSTOM_CSS, disable_feedback=True).send()
 
-    # <--- MODIFICAT: Definir DOS elements d'imatge, un per a cada tema ---
-    # Assegura't que tens 'logo-light.png' i 'logo-dark.png' a la carpeta 'public'.
+    # Assegura't de tenir els logos a una carpeta 'public' al mateix nivell que 'main.py'
+    # o simplement posa la ruta completa.
+    # Per assegurar-nos, canviarem les rutes a relatives des del directori de l'app.
+    app_dir = Path(__file__).parent
+    logo_light_path = app_dir / "public" / "logo-light.png"
+    logo_dark_path = app_dir / "public" / "logo-dark.png"
+
+    # Definim els dos elements d'imatge
     logo_light_element = cl.Image(
-        path="./public/logo-light.png",
-        name="logo_light",  # Nom per al tema fosc (logo clar)
+        path=str(logo_light_path),
+        name="logo_light",
         display="inline",
         size="large",
     )
     logo_dark_element = cl.Image(
-        path="./public/logo-dark.png",
-        name="logo_dark",  # Nom per al tema clar (logo fosc)
+        path=str(logo_dark_path),
+        name="logo_dark",
         display="inline",
         size="large",
     )
     
-    # <--- MODIFICAT: Enviar el missatge de benvinguda adjuntant AMBDÓS elements ---
-    # El CSS s'encarregarà de mostrar només el correcte.
+    # Enviem el missatge de benvinguda amb els dos logos. El CSS s'encarregarà de la resta.
     await cl.Message(
         content="Hola! Soc el teu assistent de normativa tècnica.\nPer re-indexar els documents, escriu `REINDEX_RAG`.",
-        elements=[logo_light_element, logo_dark_element] # <-- S'envien els dos
+        elements=[logo_light_element, logo_dark_element]
     ).send()
+
 
 @cl.on_message
 async def main(message: cl.Message):
