@@ -92,7 +92,7 @@ async def start():
     # <--- NOU: Definir l'element d'imatge
     # Assegura't que tens una carpeta 'public' a l'arrel amb 'logo.png' a dins.
     logo_element = cl.Image(
-        path="./public/logo.png",
+        path="./public/logo.svg",
         name="logo",
         display="inline",
         size="large", # Pots ajustar la mida a 'small', 'medium', o 'large'
