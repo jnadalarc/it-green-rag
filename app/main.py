@@ -104,8 +104,8 @@ async def start():
     # Enviar el missatge de benvinguda adjuntant AMBDÓS elements.
     # El CSS s'hauria d'encarregar de mostrar només el correcte.
     await cl.Message(
-        content="Hola! Soc el teu assistent de normativa tècnica.\nPer re-indexar els documents, escriu `REINDEX_RAG`.",
-        elements=[logo_light_element, logo_dark_element]
+        content="Hola! Soc el teu assistent de normativa tècnica.\nPer re-indexar els documents, escriu `REINDEX_RAG`."
+        # elements=[logo_light_element, logo_dark_element]
     ).send()
 
 
