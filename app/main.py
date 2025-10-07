@@ -1,5 +1,5 @@
-# Aquest és el teu app/main.py revertit a l'estat anterior.
-# Aquesta versió depèn de 'chainlit.md' i 'public/styles.css'.
+# Aquest és el teu app/main.py amb canvis mínims per parametritzar model i timeout.
+# Depèn de 'chainlit.md' i 'public/styles.css'.
 
 import chainlit as cl
 import os
@@ -8,11 +8,15 @@ import sqlite3
 from pathlib import Path
 
 # --- Configuració ---
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama-service:11434")
 OLLAMA_API_URL = f"{OLLAMA_HOST}/api/chat"
 
 DOCS_DIR = Path(os.getenv("DOCS_DIR", "/docs")).resolve()
 RAG_DB_PATH = Path(os.getenv("RAG_DB_PATH", "/rag/rag.db")).resolve()
+
+# Afegits mínims:
+MODEL_NAME = os.getenv("MODEL_NAME", "mistral")
+REQ_TIMEOUT = float(os.getenv("REQ_TIMEOUT", "120"))
 
 SYSTEM_PROMPT = (
     "You are a concise assistant. If the user asks for document-based answers, you may call RAG to retrieve snippets."
@@ -60,12 +64,12 @@ def rag_search(query: str, k: int = 5):
 def llama_chat(messages, temperature=0.7):
     """Envia una petició al servidor d'Ollama usant l'API nativa."""
     payload = {
-        "model": "mistral",
+        "model": MODEL_NAME,  # <- parametritzat
         "messages": messages,
         "stream": False,
         "options": { "temperature": temperature }
     }
-    r = requests.post(OLLAMA_API_URL, json=payload, timeout=120)
+    r = requests.post(OLLAMA_API_URL, json=payload, timeout=REQ_TIMEOUT)  # <- timeout parametritzat
     r.raise_for_status()
     return r.json()["message"]["content"]
 
@@ -85,29 +89,9 @@ else: print("La base de dades RAG ja existeix. S'omet la indexació inicial.")
 @cl.on_chat_start
 async def start():
     """S'executa quan un usuari inicia un xat."""
-
-    # Definir DOS elements d'imatge, un per a cada tema.
-    # Aquests fitxers han d'estar a 'app/public/'.
-    # logo_light_element = cl.Image(
-    #     path="./public/logo-light.png",
-    #     name="logo_light",  # Nom per al tema fosc (logo clar)
-    #     display="inline",
-    #     size="large",
-    # )
-    # logo_dark_element = cl.Image(
-    #     path="./public/logo-dark.png",
-    #     name="logo_dark",  # Nom per al tema clar (logo fosc)
-    #     display="inline",
-    #     size="large",
-    # )
-    
-    # Enviar el missatge de benvinguda adjuntant AMBDÓS elements.
-    # El CSS s'hauria d'encarregar de mostrar només el correcte.
     await cl.Message(
         content="Hola! Soc el teu assistent de normativa tècnica.\nPer re-indexar els documents, escriu `REINDEX_RAG`."
-        # elements=[logo_light_element, logo_dark_element]
     ).send()
-
 
 @cl.on_message
 async def main(message: cl.Message):
@@ -137,7 +121,6 @@ async def main(message: cl.Message):
         async with cl.Step(name="Preparar context i fonts") as step:
             rag_snippets_es = "\n---\n".join([f"Document: {p}\nContent: {c}" for p, c in hits])
             context = f"RAG_SNIPPETS (Spanish original):\n{rag_snippets_es}"
-            
             for i, (p, c) in enumerate(hits):
                 async with cl.Step(name=f"Traduir fragment {i+1}"):
                     translated_content = await translate_text(c, 'Catalan')

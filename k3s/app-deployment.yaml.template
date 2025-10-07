@@ -2,41 +2,45 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: app-deployment
-  labels: { app: rag }
+  labels:
+    app: rag
 spec:
   replicas: 1
   selector:
-    matchLabels: { app: rag }
+    matchLabels:
+      app: rag
   template:
     metadata:
-      labels: { app: rag }
+      labels:
+        app: rag
     spec:
       containers:
-      - name: chainlit
-        image: ghcr.io/itgreen/chainlit-rag:latest   # la teva imatge
-        ports:
-        - containerPort: 8000
-        env:
-        - name: OLLAMA_HOST
-          value: "http://ollama-service:11434"       # clau
-        - name: DOCS_DIR
-          value: "/docs"
-        - name: RAG_DB_PATH
-          value: "/rag/rag.db"
-        # probes TCP per evitar haver de crear /healthz ara
-        readinessProbe:
-          tcpSocket: { port: 8000 }
-          periodSeconds: 5
-        livenessProbe:
-          tcpSocket: { port: 8000 }
-          initialDelaySeconds: 15
-          periodSeconds: 10
-        resources:
-          requests: { cpu: "500m", memory: "512Mi" }
-          limits:   { cpu: "2",    memory: "2Gi" }
-        volumeMounts:
-        - name: rag-db
-          mountPath: /rag
+        - name: chainlit
+          image: ghcr.io/itgreen/chainlit-rag:latest
+          env:
+            - name: OLLAMA_HOST
+              value: "http://ollama-service:11434"   # no localhost
+            - name: MODEL_NAME
+              value: "mistral"
+            - name: REQ_TIMEOUT
+              value: "120"
+            - name: DOCS_DIR
+              value: "/docs"
+            - name: RAG_DB_PATH
+              value: "/rag/rag.db"
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          volumeMounts:
+            - name: rag-db
+              mountPath: /rag
       volumes:
-      - name: rag-db
-        emptyDir: {}
+        - name: rag-db
+          emptyDir: {}
+
