@@ -1,11 +1,22 @@
-/* ===== FITXER CSS DE DIAGNÒSTIC ===== */
-
-/* Si aquest fitxer es carrega, el logo per al tema fosc tindrà una vora VERMELLA */
+/* Amaguem per defecte el logo del tema fosc (el que és de color clar) */
 .element-logo_light {
-  border: 5px solid red !important;
+    display: none !important;
 }
 
-/* Si aquest fitxer es carrega, el logo per al tema clar tindrà una vora BLAVA */
+/* Forcem la visibilitat del logo per al tema clar (el que és de color fosc) */
 .element-logo_dark {
-  border: 5px solid blue !important;
+    display: inline-block !important;
+}
+
+/* Quan el tema fosc està actiu... */
+html[data-theme="dark"] {
+    /* Amaguem el logo del tema clar */
+    .element-logo_dark {
+        display: none !important;
+    }
+    
+    /* I mostrem el logo del tema fosc */
+    .element-logo_light {
+        display: inline-block !important;
+    }
 }

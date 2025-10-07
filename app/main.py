@@ -1,40 +1,11 @@
-# Aquest és el teu app/main.py complet i amb el CSS integrat
+# Aquest és el teu app/main.py revertit a l'estat anterior.
+# Aquesta versió depèn de 'chainlit.md' i 'public/styles.css'.
 
 import chainlit as cl
 import os
 import requests
 import sqlite3
 from pathlib import Path
-
-# --- NOU: CSS integrat directament al codi ---
-# Aquesta cadena de text conté tot el CSS necessari.
-# L'injectarem directament a l'aplicació quan comenci el xat.
-CUSTOM_CSS = """
-<style>
-    /* Amaguem per defecte el logo del tema fosc (el que és de color clar) */
-    .element-logo_light {
-        display: none !important;
-    }
-
-    /* Forcem la visibilitat del logo per al tema clar (el que és de color fosc) */
-    .element-logo_dark {
-        display: inline-block !important;
-    }
-    
-    /* Quan el tema fosc està actiu... */
-    html[data-theme="dark"] {
-        /* Amaguem el logo del tema clar */
-        .element-logo_dark {
-            display: none !important;
-        }
-        
-        /* I mostrem el logo del tema fosc */
-        .element-logo_light {
-            display: inline-block !important;
-        }
-    }
-</style>
-"""
 
 # --- Configuració ---
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
@@ -114,31 +85,24 @@ else: print("La base de dades RAG ja existeix. S'omet la indexació inicial.")
 @cl.on_chat_start
 async def start():
     """S'executa quan un usuari inicia un xat."""
-    # <--- NOU: Injectem el CSS com si fos un missatge. No serà visible.
-    await cl.Message(content=CUSTOM_CSS, disable_feedback=True).send()
 
-    # Assegura't de tenir els logos a una carpeta 'public' al mateix nivell que 'main.py'
-    # o simplement posa la ruta completa.
-    # Per assegurar-nos, canviarem les rutes a relatives des del directori de l'app.
-    app_dir = Path(__file__).parent
-    logo_light_path = app_dir / "public" / "logo-light.png"
-    logo_dark_path = app_dir / "public" / "logo-dark.png"
-
-    # Definim els dos elements d'imatge
+    # Definir DOS elements d'imatge, un per a cada tema.
+    # Aquests fitxers han d'estar a 'app/public/'.
     logo_light_element = cl.Image(
-        path=str(logo_light_path),
-        name="logo_light",
+        path="./public/logo-light.png",
+        name="logo_light",  # Nom per al tema fosc (logo clar)
         display="inline",
         size="large",
     )
     logo_dark_element = cl.Image(
-        path=str(logo_dark_path),
-        name="logo_dark",
+        path="./public/logo-dark.png",
+        name="logo_dark",  # Nom per al tema clar (logo fosc)
         display="inline",
         size="large",
     )
     
-    # Enviem el missatge de benvinguda amb els dos logos. El CSS s'encarregarà de la resta.
+    # Enviar el missatge de benvinguda adjuntant AMBDÓS elements.
+    # El CSS s'hauria d'encarregar de mostrar només el correcte.
     await cl.Message(
         content="Hola! Soc el teu assistent de normativa tècnica.\nPer re-indexar els documents, escriu `REINDEX_RAG`.",
         elements=[logo_light_element, logo_dark_element]
