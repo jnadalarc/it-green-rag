@@ -1,18 +1,28 @@
-/* Per defecte (en tema clar), amaguem el logo per al tema fosc */
+/*
+  ** Lògica del CSS **
+  1. Per defecte (tema clar), mostrem el logo fosc i amaguem el clar.
+  2. Quan el tema canvia a fosc ([data-theme="dark"]), invertim la visibilitat.
+*/
+
+/* El logo per al TEMA FOSC (el que és de color clar) està amagat per defecte */
 .element-logo_light {
-    display: none !important;
+  display: none !important;
 }
 
-/* Quan el tema fosc està actiu ([data-theme='dark']) */
-[data-theme='dark'] {
-    /* Amaguem el logo per al tema clar */
-    .element-logo_dark {
-        display: none !important;
-    }
+/* El logo per al TEMA CLAR (el que és de color fosc) està visible per defecte */
+.element-logo_dark {
+  display: inline-block !important;
+}
 
-    /* Mostrem el logo per al tema fosc */
-    .element-logo_light {
-        /* Usem 'inline-block' perquè és el que Chainlit fa servir per a imatges 'inline' */
-        display: inline-block !important; 
-    }
+/* Quan el TEMA FOSC està actiu */
+[data-theme="dark"] {
+  /* Amaguem el logo del tema clar */
+  .element-logo_dark {
+    display: none !important;
+  }
+
+  /* I mostrem el logo del tema fosc */
+  .element-logo_light {
+    display: inline-block !important;
+  }
 }
