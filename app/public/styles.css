@@ -1,28 +1,11 @@
-/*
-  ** Lògica del CSS **
-  1. Per defecte (tema clar), mostrem el logo fosc i amaguem el clar.
-  2. Quan el tema canvia a fosc ([data-theme="dark"]), invertim la visibilitat.
-*/
+/* ===== FITXER CSS DE DIAGNÒSTIC ===== */
 
-/* El logo per al TEMA FOSC (el que és de color clar) està amagat per defecte */
+/* Si aquest fitxer es carrega, el logo per al tema fosc tindrà una vora VERMELLA */
 .element-logo_light {
-  display: none !important;
+  border: 5px solid red !important;
 }
 
-/* El logo per al TEMA CLAR (el que és de color fosc) està visible per defecte */
+/* Si aquest fitxer es carrega, el logo per al tema clar tindrà una vora BLAVA */
 .element-logo_dark {
-  display: inline-block !important;
-}
-
-/* Quan el TEMA FOSC està actiu */
-[data-theme="dark"] {
-  /* Amaguem el logo del tema clar */
-  .element-logo_dark {
-    display: none !important;
-  }
-
-  /* I mostrem el logo del tema fosc */
-  .element-logo_light {
-    display: inline-block !important;
-  }
+  border: 5px solid blue !important;
 }
