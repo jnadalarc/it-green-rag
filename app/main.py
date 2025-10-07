@@ -89,19 +89,26 @@ else: print("La base de dades RAG ja existeix. S'omet la indexació inicial.")
 async def start():
     """S'executa quan un usuari inicia un xat."""
 
-    # <--- NOU: Definir l'element d'imatge
-    # Assegura't que tens una carpeta 'public' a l'arrel amb 'logo.png' a dins.
-    logo_element = cl.Image(
-        path="./public/logo.png",
-        name="logo",
+    # <--- MODIFICAT: Definir DOS elements d'imatge, un per a cada tema ---
+    # Assegura't que tens 'logo-light.png' i 'logo-dark.png' a la carpeta 'public'.
+    logo_light_element = cl.Image(
+        path="./public/logo-light.png",
+        name="logo_light",  # Nom per al tema fosc (logo clar)
         display="inline",
-        size="large", # Pots ajustar la mida a 'small', 'medium', o 'large'
+        size="large",
+    )
+    logo_dark_element = cl.Image(
+        path="./public/logo-dark.png",
+        name="logo_dark",  # Nom per al tema clar (logo fosc)
+        display="inline",
+        size="large",
     )
     
-    # <--- MODIFICAT: Enviar el missatge de benvinguda adjuntant l'element de la imatge
+    # <--- MODIFICAT: Enviar el missatge de benvinguda adjuntant AMBDÓS elements ---
+    # El CSS s'encarregarà de mostrar només el correcte.
     await cl.Message(
         content="Hola! Soc el teu assistent de normativa tècnica.\nPer re-indexar els documents, escriu `REINDEX_RAG`.",
-        elements=[logo_element]
+        elements=[logo_light_element, logo_dark_element] # <-- S'envien els dos
     ).send()
 
 @cl.on_message
