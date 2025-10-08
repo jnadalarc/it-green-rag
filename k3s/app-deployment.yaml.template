@@ -1,25 +1,28 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-deployment
-  labels:
-    app: rag
+  name: ${APP_NAME}
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: rag
+      app: ${APP_NAME}
+  replicas: 1
   template:
     metadata:
       labels:
-        app: rag
+        app: ${APP_NAME}
     spec:
       containers:
-        - name: chainlit
-          image: ghcr.io/itgreen/chainlit-rag:latest
+        - image: ${IMAGE}
+          imagePullPolicy: Always
+          name: ${APP_NAME}
+          ports:
+            - containerPort: ${APP_PORT}
+              name: ${APP_PORT}tcp
+              protocol: TCP
           env:
             - name: OLLAMA_HOST
-              value: "http://ollama-service:11434"   # no localhost
+              value: "http://ollama-service:11434"   
             - name: MODEL_NAME
               value: "mistral"
             - name: REQ_TIMEOUT
@@ -28,19 +31,30 @@ spec:
               value: "/docs"
             - name: RAG_DB_PATH
               value: "/rag/rag.db"
-          ports:
-            - containerPort: 8000
-          resources:
-            requests:
-              cpu: "500m"
-              memory: "512Mi"
-            limits:
-              cpu: "2"
-              memory: "2Gi"
+          resources: {}
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
           volumeMounts:
-            - name: rag-db
-              mountPath: /rag
+            - mountPath: /auth
+              name: auth
+            - mountPath: /rag
+              name: rag-db
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+        - name: registry-wattega-auth
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
       volumes:
+        - name: auth
+          secret:
+            defaultMode: 420
+            secretName: registry-auth-secret
         - name: rag-db
-          emptyDir: {}
-
+          emptyDir: {}   # canvia-ho a PVC si vols persistència

@@ -1,12 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: app-service
-  labels: { app: rag }
+  name: ${APP_NAME}
+  labels:
+    app: ${APP_NAME}
 spec:
   type: ClusterIP
-  selector: { app: rag }
+  selector:
+    app: ${APP_NAME}
   ports:
-  - name: http
-    port: 80
-    targetPort: 8000
+    - name: http
+      port: 80
+      targetPort: ${APP_PORT}
+
