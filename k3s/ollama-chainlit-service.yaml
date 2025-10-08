@@ -1,0 +1,14 @@
+# AQUEST ÉS L'SCRIPT SENCER DEL NOU SERVICE D'OLLAMA PER A CHAINLIT
+# Crea una adreça de xarxa interna estable (ollama-chainlit-service)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-chainlit-service # Nou nom de Service
+spec:
+  selector:
+    app: ollama-chainlit-app     # Ha de coincidir amb el nou Deployment
+  ports:
+    - protocol: TCP
+      port: 11434
+      targetPort: 11434
+  type: ClusterIP

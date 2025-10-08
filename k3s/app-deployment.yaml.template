@@ -1,3 +1,4 @@
+# AQUEST ÉS L'SCRIPT SENCER AMB EL CANVI DE LA VARIABLE D'ENTORN
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,6 +13,9 @@ spec:
       labels:
         app: ${APP_NAME}
     spec:
+      # Opcionalment pots mantenir l'initContainer que et vaig donar abans
+      # per més seguretat, però amb el readinessProbe d'Ollama ja hauria de ser estable.
+      
       containers:
         - image: ${IMAGE}
           imagePullPolicy: Always
@@ -22,7 +26,8 @@ spec:
               protocol: TCP
           env:
             - name: OLLAMA_HOST
-              value: "http://ollama-service:11434"   
+              # CANVI CRÍTIC: Apunta al nou servei dedicat!
+              value: "http://ollama-chainlit-service:11434"    
             - name: MODEL_NAME
               value: "mistral"
             - name: REQ_TIMEOUT
@@ -57,4 +62,4 @@ spec:
             defaultMode: 420
             secretName: registry-auth-secret
         - name: rag-db
-          emptyDir: {}   # canvia-ho a PVC si vols persistència
+          emptyDir: {}    # canvia-ho a PVC si vols persistència
