@@ -4,7 +4,7 @@ kind: Deployment
 metadata:
   name: ollama-chainlit-deployment
   labels:
-    app: ollama-chainlit-app  # Etiqueta única per a aquest nou Deployment
+    app: ollama-chainlit-app
 spec:
   replicas: 1
   selector:
