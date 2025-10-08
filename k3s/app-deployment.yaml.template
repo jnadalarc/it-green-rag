@@ -27,7 +27,7 @@ spec:
           env:
             - name: OLLAMA_HOST
               # CANVI CRÍTIC: Apunta al nou servei dedicat!
-              value: "http://ollama-chainlit-service:11434"    
+              value: "http://ollama-service:11434"    
             - name: MODEL_NAME
               value: "mistral"
             - name: REQ_TIMEOUT
